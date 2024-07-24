@@ -6,7 +6,7 @@ import SecurityContext from '../../utils/SecurityContext';
 
 function App() {
   const loggedInStorage = localStorage.getItem('loggedIn');
-  const loggedInValue = loggedInStorage && loggedInStorage === 'true' ? true : false;
+  const loggedInValue = loggedInStorage && loggedInStorage === '1' ? true : false;
   const[loggedIn, setLoggedIn] = useState(loggedInValue);
   return (
     <SecurityContext.Provider value={{loggedIn, setLoggedIn}}>

@@ -1,6 +1,8 @@
 // App.js
-import React from 'react';
+import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import SecurityContext from '../../utils/SecurityContext';
 import Button from '../core/button/Button.styled';
 import Link from '../core/link/Link.styled';
 import SignupText from '../core/signup-text/SignupText.styled';
@@ -55,7 +57,24 @@ const Title = styled.h2`
   margin-bottom: 20px;
 `;
 
+
 const LoginScreen = () => {
+  const navigate = useNavigate();
+  const {setLoggedIn} = useContext(SecurityContext);
+  
+  const registerButtonClicked = () =>{
+    navigate("/register");
+  }
+  const forgotPasswordButtonClicked = () =>{
+    navigate("/forgot-password");
+  }
+
+  const loginButtonClicked = () =>{
+    setLoggedIn(true);
+    localStorage.setItem("loggedIn", "1");
+    navigate("/dashboard", {replace: true});
+  }
+  
     return (
         <Container>
             <LeftSection>
@@ -74,14 +93,14 @@ const LoginScreen = () => {
                             <label style={{ marginLeft: '8px' }}>Remember Me</label>
                         </div>
                         <div style={{ alignItems: 'center' }}>
-                        <Link to="/forgot-password">
+                        <Link role="button" onClick={forgotPasswordButtonClicked}>
                             Forgot password?
                         </Link>
                         </div>
                     </div>
-                    <Button type="submit">Login</Button>
+                    <Button type="submit" onClick={loginButtonClicked}>Login</Button>
                     <SignupText>
-                        Don’t have an account?   <Link to="/">Register here</Link>
+                        Don’t have an account?   <Link role="button" onClick={registerButtonClicked}>Register here</Link>
                     </SignupText>
                 </Form>
             </RightSection>

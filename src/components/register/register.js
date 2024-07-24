@@ -1,5 +1,6 @@
 // App.js
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Button from '../core/button/Button.styled';
 import Link from '../core/link/Link.styled';
@@ -57,6 +58,10 @@ const Title = styled.h2`
 
 
 function RegisterScreen() {
+  const navigate = useNavigate();
+  const loginButtonClicked = () =>{
+    navigate("/");
+  }
     return (
         <Container>
             <LeftSection>
@@ -66,13 +71,13 @@ function RegisterScreen() {
             </LeftSection>
             <RightSection>
                 <Form>
-                    <Title>Log In</Title>
+                    <Title>Register</Title>
                     <TextInput type="email" placeholder="Email Address" />
                     <TextInput type="password" placeholder="Password" />
                     <TextInput type="confirmPassword" placeholder="Confirm Password" />
                     <Button type="submit">Register</Button>
                     <SignupText>
-                        Already have an account?   <Link to="/">Login</Link>
+                        Already have an account?   <Link to="/" role="button" onClick={loginButtonClicked}>Login</Link>
                     </SignupText>
                 </Form>
             </RightSection>

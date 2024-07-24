@@ -1,10 +1,10 @@
 import { createBrowserRouter } from "react-router-dom";
 import DashboardView from "../components/dashboard/DashboardView";
 import ErrorView from "../components/error/ErrorView";
+import ForgotPasswordScreen from "../components/forgot-password/ForgotPassword";
 import LoginScreen from "../components/login/login";
 import RegisterScreen from "../components/register/register";
 import SettingsView from "../components/settings/SettingsView";
-import SplashView from "../components/splash/SplashView";
 import TransactionsView from "../components/transactions/TransactionsView";
 import ProtectedRoutes from "./ProtectedRoutes";
 import PublicRoutes from "./PublicRoutes";
@@ -15,16 +15,16 @@ const AppRoutes = createBrowserRouter([
     element: <PublicRoutes />,
     children: [
         {
-            path: true,
-            element: <SplashView />
-        },
-        {
-            path: "/login",
+            path: '/',
             element: <LoginScreen />
         },
         {
             path: "/register",
             element: <RegisterScreen />
+        },
+        {
+            path: "/forgot-password",
+            element: <ForgotPasswordScreen />
         },
         {
             path: "/500",
