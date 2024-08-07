@@ -35,27 +35,33 @@ margin-left: 10px;
 `;
 
 const HeaderView = () => {
-    const navigate = useNavigate();
-    const {setLoggedIn} = useContext(SecurityContext);
+  const navigate = useNavigate();
+  const { setLoggedIn } = useContext(SecurityContext);
 
-    const handleAddTransaction = () => {
-        // Add transaction logic here
-      };
-    
-      const handleLogout = () => {
-        setLoggedIn(false);
-        localStorage.setItem("loggedIn", "0");
-        navigate("/", {replace: true});
-      };
+  const handleAddTransaction = () => {
+    // Add transaction logic here
+    navigate('/transaction-form');
+  };
 
-      return <HeaderContainer>
-        <Title>Personal Finance Management</Title>
-            <div>
-                <Button onClick={handleAddTransaction}>Add New Transaction</Button>
+  const handleLogout = () => {
+    setLoggedIn(false);
+    localStorage.setItem("loggedIn", "0");
+    localStorage.removeItem('user');
+    navigate("/", { replace: true });
+  };
 
-                <Button onClick={handleLogout}>Logout</Button>
-            </div>
-    </HeaderContainer>
+  const handleHomeButton = () => {
+    navigate("/dashboard", { replace: true });
+  };
+
+  return <HeaderContainer>
+    <Title>Personal Finance Management</Title>
+    <div>
+      <Button onClick={handleHomeButton}>Home</Button>
+      <Button onClick={handleAddTransaction}>Add New Transaction</Button>
+      <Button onClick={handleLogout}>Logout</Button>
+    </div>
+  </HeaderContainer>
 }
 
 export default HeaderView;

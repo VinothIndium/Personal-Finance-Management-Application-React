@@ -1,7 +1,8 @@
 // App.js
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { login } from '../../services/authService';
 import SecurityContext from '../../utils/SecurityContext';
 import Button from '../core/button/Button.styled';
 import Link from '../core/link/Link.styled';
@@ -61,6 +62,10 @@ const Title = styled.h2`
 const LoginScreen = () => {
   const navigate = useNavigate();
   const {setLoggedIn} = useContext(SecurityContext);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
+  //const history = useHistory();
   
   const registerButtonClicked = () =>{
     navigate("/register");
@@ -69,11 +74,25 @@ const LoginScreen = () => {
     navigate("/forgot-password");
   }
 
-  const loginButtonClicked = () =>{
-    setLoggedIn(true);
-    localStorage.setItem("loggedIn", "1");
-    navigate("/dashboard", {replace: true});
-  }
+  // const loginButtonClicked = () =>{
+  //   setLoggedIn(true);
+  //   localStorage.setItem("loggedIn", "1");
+  //   navigate("/dashboard", {replace: true});
+  // }
+
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      await login(email, password);
+      localStorage.setItem("loggedIn", "1");
+      setLoggedIn(true);
+      navigate("/dashboard", {replace: true});
+      //history.push('/dashboard', {replace: true});
+    } catch (error) {
+      setMessage('Error logging in.');
+    }
+  };
   
     return (
         <Container>
@@ -85,8 +104,8 @@ const LoginScreen = () => {
             <RightSection>
                 <Form>
                     <Title>Log In</Title>
-                    <TextInput type="email" placeholder="Email Address" />
-                    <TextInput type="password" placeholder="Password" />
+                    <TextInput type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <TextInput type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required/>
                     <div style={{marginTop:'10px', marginBottom:'10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{alignItems: 'center' }}>
                             <TextInput type="checkbox" />
@@ -98,11 +117,12 @@ const LoginScreen = () => {
                         </Link>
                         </div>
                     </div>
-                    <Button type="submit" onClick={loginButtonClicked}>Login</Button>
+                    <Button type="submit" onClick={handleLogin}>Login</Button>
                     <SignupText>
                         Don’t have an account?   <Link role="button" onClick={registerButtonClicked}>Register here</Link>
                     </SignupText>
                 </Form>
+                {message && <p>{message}/</p>}
             </RightSection>
         </Container>
     );

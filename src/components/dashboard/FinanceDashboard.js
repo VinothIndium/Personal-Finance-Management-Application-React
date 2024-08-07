@@ -1,57 +1,90 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { getAllTransactions } from '../../services/authService';
 import Card from '../core/card/CardStyle';
-
-const DashboardWrapper = styled.div`
-  padding-left: 2rem;
-  padding-right: 2rem;
-  background-color: #f4f4f4;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin: 1rem auto;
-   flex: 2;
-`;
 
 const Title = styled.h1`
   color: black;
-  font-size: 30px;
+  font-size: 25px;
+  padding-left: 0.5rem;
+  margin-top: 0; 
 `;
 
 const DashboardContainer = styled.div`
   display: flex;
   justify-content: space-between;
-  flex-wrap: wrap;
-  
+  flex-wrap: wrap; 
 `;
 
-
+const Container = styled.div`
+  margin-top: 0;
+  padding-top: 0;
+`;
 
 const FinanceDashboard = () => {
-    const balance = 10000; // Example balance
-    const totalIncome = 5000; // Example total income
-    const totalExpenses = 2000; // Example total expenses
+  const [totals, setTotals] = useState({
+    totalBalance: 0,
+    totalIncome: 0,
+    totalExpense: 0,
+  });
 
-    return (
-        <div>
-            <Title>Finance Dashboard</Title>
-            <DashboardContainer>
-                <Card bgColor="#4CAF50">
-                    <h2>Total Balance</h2>
-                    <p>${balance}</p>
-                </Card>
-                <Card bgColor="#2196F3">
-                    <h2>Income</h2>
-                    <p>${totalIncome}</p>
-                </Card>
-                <Card bgColor="#f44336">
-                    <h2>Expenses</h2>
-                    <p>${totalExpenses}</p>
-                </Card>
-            </DashboardContainer>
-        </div>
-    );
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const response = await getAllTransactions();
+
+        // Calculate totals
+        const calculatedTotals = calculateTotals(response);
+        setTotals(calculatedTotals);
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
+  const calculateTotals = (transactions) => {
+    const totals = {
+      totalBalance: 0,
+      totalIncome: 0,
+      totalExpense: 0,
+    };
+  
+    transactions.forEach(transaction => {
+      const amount = parseFloat(transaction.amount); // Convert amount to a number
+      if (transaction.category === 'Deposit') {
+        totals.totalIncome += amount;
+      } else if (transaction.category === 'Expense') {
+        totals.totalExpense += amount;
+      }
+  
+      // Assuming balance is calculated as income - expense
+      totals.totalBalance = totals.totalIncome - totals.totalExpense;
+    });
+  
+    return totals;
+  };
+
+  return (
+    <Container>
+      <Title>Finance Dashboard</Title>
+      <DashboardContainer>
+        <Card $bgColor="#4CAF50">
+          <h2>Total Balance</h2>
+          <p>${totals.totalBalance}</p>
+        </Card>
+        <Card $bgColor="#2196F3">
+          <h2>Income</h2>
+          <p>${totals.totalIncome}</p>
+        </Card>
+        <Card $bgColor="#f44336">
+          <h2>Expenses</h2>
+          <p>${totals.totalExpense}</p>
+        </Card>
+      </DashboardContainer>
+    </Container>
+  );
 };
-
 
 export default FinanceDashboard;

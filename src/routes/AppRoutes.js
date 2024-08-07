@@ -5,7 +5,9 @@ import ForgotPasswordScreen from "../components/forgot-password/ForgotPassword";
 import LoginScreen from "../components/login/login";
 import RegisterScreen from "../components/register/register";
 import SettingsView from "../components/settings/SettingsView";
-import TransactionsView from "../components/transactions/TransactionsView";
+import TransactionDetailsView from "../components/transactions/TransactionDetails";
+import TransactionForm from "../components/transactions/TransactionForm";
+import TransactionListViewAll from "../components/transactions/TransactionsListViewAll";
 import ProtectedRoutes from "./ProtectedRoutes";
 import PublicRoutes from "./PublicRoutes";
 
@@ -41,8 +43,16 @@ const AppRoutes = createBrowserRouter([
             element: <DashboardView/>
         },
         {
+            path: "/transaction-form/:transactionId?",
+            element: <TransactionForm />
+        },
+        {
             path: "/transactions",
-            element: <TransactionsView />
+            element: <TransactionListViewAll />
+        },
+        {
+            path: "/transaction-details/:transactionId",
+            element: <TransactionDetailsView />
         },
         {
             path: "/settings",
