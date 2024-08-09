@@ -1,6 +1,7 @@
+import { useQuery } from '@apollo/client';
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { getAllTransactions } from '../../services/authService';
+import { GET_ALL_TRANSACTIONS } from '../../apis/graphql/queries';
 import Card from '../core/card/CardStyle';
 
 const Title = styled.h1`
@@ -27,22 +28,34 @@ const FinanceDashboard = () => {
     totalIncome: 0,
     totalExpense: 0,
   });
+  const { data, loading, error } = useQuery(GET_ALL_TRANSACTIONS);
 
   useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const response = await getAllTransactions();
+    // const fetchTransactions = async () => {
+    //   try {
+    //     const response = await getAllTransactions();
 
-        // Calculate totals
-        const calculatedTotals = calculateTotals(response);
-        setTotals(calculatedTotals);
-      } catch (error) {
-        console.error('Error fetching transactions:', error);
+    //     // Calculate totals
+    //     const calculatedTotals = calculateTotals(response);
+    //     setTotals(calculatedTotals);
+    //   } catch (error) {
+    //     console.error('Error fetching transactions:', error);
+    //   }
+    // };
+
+    // fetchTransactions();
+    if (data) {
+      if (data.getAllTransactions) {
+        const calculatedTotals = calculateTotals(data.getAllTransactions);
+         setTotals(calculatedTotals);
+      } else {
+        console.log('Error fetching transactions:', error);
       }
-    };
-
-    fetchTransactions();
-  }, []);
+  }
+  }, [data, error]);
+  
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
 
   const calculateTotals = (transactions) => {
     const totals = {

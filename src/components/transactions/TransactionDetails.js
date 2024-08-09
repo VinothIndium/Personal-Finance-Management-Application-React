@@ -1,9 +1,10 @@
+import { useMutation, useQuery } from '@apollo/client';
 import { Delete, Edit } from '@mui/icons-material';
 import { Box, Button, Card, CardContent, Grid, Typography } from '@mui/material';
 import { styled as muiStyled } from '@mui/material/styles';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { deleteTransactionItem, getTransactionItem } from '../../services/authService';
+import { DELETE_TRANSACTION, GET_TRANSACTION } from '../../apis/graphql/queries';
 
 const CardStyle = muiStyled(Card)(({ theme }) => ({
     backgroundColor: 'white',
@@ -59,24 +60,38 @@ const TransactionDetails = () => {
     const [transaction, setTransaction] = useState(null);
     const [loadingError, setLoadingError] = useState('');
 
-    useEffect(() => {
-        const fetchTransaction = async () => {
-            try {
-                const response = await getTransactionItem(transactionId);
-                if (response.status === 200) {
-                    const transaction = response.data;
-                    setTransaction(transaction);
-                    console.log("Transaction fetched successfully");
-                } else {
-                    console.error("Transaction failed to add");
-                    setLoadingError("Transaction not found");
-                }
-            } catch (error) {
-                setLoadingError("Error loading data: " + error.message);
+    const [deleteTransaction] = useMutation(DELETE_TRANSACTION);
+
+    useQuery(GET_TRANSACTION, {
+        variables: { id: transactionId },
+        onCompleted: (data) => {
+            if (data && data.getTransaction) {
+                setTransaction(data.getTransaction);
             }
-        };
-        fetchTransaction();
-    }, [transactionId]);
+        },
+        onError: (error) => {
+            setLoadingError(`Error fetching transaction: ${error.message}`);
+        },
+    });
+
+    // useEffect(() => {
+    //     const fetchTransaction = async () => {
+    //         try {
+    //             const response = await getTransactionItem(transactionId);
+    //             if (response.status === 200) {
+    //                 const transaction = response.data;
+    //                 setTransaction(transaction);
+    //                 console.log("Transaction fetched successfully");
+    //             } else {
+    //                 console.error("Transaction failed to add");
+    //                 setLoadingError("Transaction not found");
+    //             }
+    //         } catch (error) {
+    //             setLoadingError("Error loading data: " + error.message);
+    //         }
+    //     };
+    //     fetchTransaction();
+    // }, [transactionId]);
 
     const handleEdit = () => {
         console.log('Edit transaction with ID:', transactionId);
@@ -85,10 +100,12 @@ const TransactionDetails = () => {
 
     const handleDelete = async () => {
         console.log('Delete transaction with ID:', transactionId);
-        try{
-            const response = await deleteTransactionItem(transactionId);
-            if (response.message === "Transaction deleted") {
-                navigate('/transactions');
+        try {
+            //const response = await deleteTransactionItem(transactionId);
+            const response = await deleteTransaction({ variables: { id: transactionId } });
+            console.log(response);
+            if (response.data.deleteTransaction.success) {
+                navigate("/transactions");
                 console.log("Transaction deleted successfully");
             } else {
                 console.error("Transaction failed to delete");

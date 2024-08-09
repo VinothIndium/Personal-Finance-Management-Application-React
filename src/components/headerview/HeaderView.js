@@ -47,6 +47,7 @@ const HeaderView = () => {
     setLoggedIn(false);
     localStorage.setItem("loggedIn", "0");
     localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
     navigate("/", { replace: true });
   };
 

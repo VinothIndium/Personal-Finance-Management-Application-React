@@ -1,8 +1,9 @@
 // App.js
+import { useMutation } from '@apollo/client';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { register } from '../../services/authService';
+import { REGISTER_MUTATION } from '../../apis/graphql/queries';
 import Button from '../core/button/Button.styled';
 import Link from '../core/link/Link.styled';
 import SignupText from '../core/signup-text/SignupText.styled';
@@ -60,17 +61,25 @@ const Title = styled.h2`
 
 function RegisterScreen() {
   const navigate = useNavigate();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [register] = useMutation(REGISTER_MUTATION);
 
   const loginButtonClicked = () => {
     navigate("/");
   }
+
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      await register(email, password);
+      //await register(name, email, password);
+      const response = await register({ variables: { email, name, password } });
+      console.log('Registered response', response);
+      const { token, user } = response.data.register;
+      console.log('Registered successfully', user);
+      localStorage.setItem('authToken', token);
       setMessage('User registered successfully.');
     } catch (error) {
       setMessage('Error registering user.');
@@ -87,6 +96,7 @@ function RegisterScreen() {
       <RightSection>
         <Form onSubmit={handleRegister}>
           <Title>Register</Title>
+          <TextInput type="name" value={name} placeholder="Name" onChange={(e) => setName(e.target.value)} required />
           <TextInput type="email" value={email} placeholder="Email Address" onChange={(e) => setEmail(e.target.value)} required />
           <TextInput type="password" value={password} placeholder="Password" onChange={(e) => setPassword(e.target.value)} required />
           <TextInput type="password" placeholder="Confirm Password" />
@@ -95,10 +105,14 @@ function RegisterScreen() {
             Already have an account?   <Link to="/" role="button" onClick={loginButtonClicked}>Login</Link>
           </SignupText>
         </Form>
-        {message && <p>{message}
-          <SignupText>
-            Click here to <Link to="/" role="button" onClick={loginButtonClicked}>Login</Link>
-          </SignupText></p>}
+        {message && (
+          <div>
+            <p>{message}</p>
+            <SignupText>
+              Click here to <Link to="/" role="button" onClick={loginButtonClicked}>Login</Link>
+            </SignupText>
+          </div>
+        )}
       </RightSection>
     </Container>
   );

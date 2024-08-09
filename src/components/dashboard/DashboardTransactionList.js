@@ -1,10 +1,11 @@
+import { useMutation, useQuery } from '@apollo/client';
 import { ChevronRight, Delete, Edit } from '@mui/icons-material';
 import { Button, IconButton, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import { styled as muiStyled } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { deleteTransactionItem, getAllTransactions } from '../../services/authService';
+import { DELETE_TRANSACTION, GET_ALL_TRANSACTIONS } from '../../apis/graphql/queries';
 import Card from '../core/card/CardStyle';
 
 
@@ -62,30 +63,22 @@ const SeeAllButton = muiStyled(Button)(({ theme }) => ({
 
 const DashboardTransactionList = () => {
     const navigate = useNavigate();
-   // const {loading, error, data} = useQuery(GET_TRANSACTIONS);
     const [transactionList, setTransactionList] = useState([]);
     const [loadingError, setLoadingError] = useState('');
-
-    // console.log("DATA: ", data.getTransactions);
-    // if (loading) return <p>Loading...</p>;
-    // if (error) return <p>Error: {error.message}</p>;
+    
+    const { data, loading, error } = useQuery(GET_ALL_TRANSACTIONS);
+    const [deleteTransaction] = useMutation(DELETE_TRANSACTION);
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await getAllTransactions();
-                console.log(response);
-                if (Array.isArray(response)) {
-                    setTransactionList(response);
-                } else {
-                    throw new Error('Fetched data is not an array');
-                }
-            } catch (error) {
-                setLoadingError("Error saving data: " + error.message);
-            }
+        if (data && data.getAllTransactions) {
+            setTransactionList(data.getAllTransactions);
+        } else if (error) {
+            setLoadingError('Error fetching transactions: ' + error.message);
         }
-        fetchData();
-    }, []);
+    }, [data, error]);
+
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>Error: {error.message}</p>;
 
     const formatDateTime = (dateTime) => {
         const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -93,7 +86,7 @@ const DashboardTransactionList = () => {
     };
 
     const sortedTransactions = Array.isArray(transactionList)
-        ? transactionList.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 4)
+        ? [...transactionList].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 4)
         : [];
 
     const seeAllButtonClicked = () => {
@@ -101,17 +94,15 @@ const DashboardTransactionList = () => {
     };
 
     const handleEdit = (transactionId) => {
-        console.log('Edit transaction with ID:', transactionId);
-        // Implement edit functionality
         navigate(`/transaction-form/${transactionId}`);
     };
 
     const handleDelete = async (transactionId) => {
-        console.log('Delete transaction with ID:', transactionId);
-        // Implement delete functionality
-        try{
-            const response = await deleteTransactionItem(transactionId);
-            if (response.message === "Transaction deleted") {
+        try {
+            //const response = await deleteTransactionItem(transactionId);
+            const response = await deleteTransaction({ variables: { id: transactionId } });
+            console.log(response);
+            if (response.data.deleteTransaction.success) {
                 setTransactionList(transactionList.filter(transaction => transaction.id !== transactionId));
                 console.log("Transaction deleted successfully");
             } else {
@@ -121,7 +112,6 @@ const DashboardTransactionList = () => {
         } catch (error) {
             setLoadingError("Error loading data: " + error.message);
         }
-       
     };
 
     return (

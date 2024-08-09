@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useQuery } from '@apollo/client';
+import React from 'react';
 import styled from 'styled-components';
-import { getAllTransactions } from '../../services/authService';
+import { GET_ALL_TRANSACTIONS } from '../../apis/graphql/queries';
 import Card from '../core/card/CardStyle';
 
 // Styled components
@@ -42,22 +43,35 @@ const TransactionCard = styled.div`
   text-align: center;
 `;
 const CategoryView = () => {
-  const [transactions, setTransactions] = useState([]);
+ // const [transactions, setTransactions] = useState([]);
 
-  useEffect(() => {
-    // Fetch all transactions when the component mounts
-    const fetchTransactions = async () => {
-      try {
-        const response = await getAllTransactions(); // Adjust the URL as needed
-        console.log("Categories",response);
-        setTransactions(response); // Assuming the API returns an array of transactions
-      } catch (error) {
-        console.error('Error fetching transactions:', error);
-      }
-    };
+  const { data, loading, error } = useQuery(GET_ALL_TRANSACTIONS);
 
-    fetchTransactions();
-  }, []);
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+  // if(data){
+  //   console.log("GetAllTransactions 1");
+  //   console.log(data.getAllTransactions);
+  //   setTransactions(data.getAllTransactions);
+  // }
+  
+
+  // useEffect(() => {
+  //   // Fetch all transactions when the component mounts
+  //   const fetchAllTransactions = async () => {
+  //     try {
+  //       const { data } = await getAllTransactions();
+  //       console.log("GetAllTransactions 2");
+  //       console.log(data.getAllTransactions);
+  //       setTransactions(data.getAllTransactions);
+  //       return data.getAllTransactions;
+  //     } catch (error) {
+  //       console.error("Error fetching transactions:", error.message);
+  //     }
+  //   };
+
+  //   fetchAllTransactions();
+  // }, []);
 
   return (
     <Container>
@@ -65,7 +79,7 @@ const CategoryView = () => {
       <CardContainer>
         <Card $bgColor="#FFC107">
           <GridContainer>
-            {transactions.map((transaction, index) => (
+            {data.getAllTransactions.map((transaction, index) => (
               <TransactionCard key={index}>
                 <h3>{transaction.description}</h3>
                 <p>Amount: ${transaction.amount}</p>

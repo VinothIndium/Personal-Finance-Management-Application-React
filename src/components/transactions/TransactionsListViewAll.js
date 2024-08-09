@@ -1,10 +1,11 @@
+import { useMutation, useQuery } from '@apollo/client';
 import { Delete, Edit, Visibility } from '@mui/icons-material';
 import { FormControl, IconButton, InputLabel, MenuItem, Select, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
 import { styled as muiStyled } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { deleteTransactionItem, getAllTransactions } from '../../services/authService';
+import { DELETE_TRANSACTION, GET_ALL_TRANSACTIONS } from '../../apis/graphql/queries';
 import Card from '../core/card/CardStyle';
 
 const Title = styled.h1`
@@ -51,17 +52,17 @@ const TransactionListViewAll = () => {
     const [searchText, setSearchText] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [categories, setCategories] = useState([]);
+    const { data, loading, error } = useQuery(GET_ALL_TRANSACTIONS);
 
+    const [deleteTransaction] = useMutation(DELETE_TRANSACTION);
 
-    useEffect(() => {
-        async function fetchData() {
+      useEffect(() => {
+        if (data) {
             try {
-                const response = await getAllTransactions();
-                console.log(response);
-                if (Array.isArray(response)) {
-                    setTransactionList(response);
+                if (data.getAllTransactions) {
+                    setTransactionList(data.getAllTransactions);
 
-                    const uniqueCategories = [...new Set(response.map(item => item.category))];
+                    const uniqueCategories = [...new Set(data.getAllTransactions.map(item => item.category))];
                     setCategories(uniqueCategories);
                 } else {
                     throw new Error('Fetched data is not an array');
@@ -70,8 +71,28 @@ const TransactionListViewAll = () => {
                 setLoadingError("Error saving data: " + error.message);
             }
         }
-        fetchData();
-    }, []);
+        // async function fetchData() {
+        //     try {
+        //         const response = await getAllTransactions();
+        //         console.log(response);
+        //         if (Array.isArray(response)) {
+        //             setTransactionList(response);
+
+        //             const uniqueCategories = [...new Set(response.map(item => item.category))];
+        //             setCategories(uniqueCategories);
+        //         } else {
+        //             throw new Error('Fetched data is not an array');
+        //         }
+        //     } catch (error) {
+        //         setLoadingError("Error saving data: " + error.message);
+        //     }
+        // }
+        // fetchData();
+    }, [data]);
+
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>Error: {error.message}</p>;
+
 
     const formatDateTime = (dateTime) => {
         const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -91,14 +112,13 @@ const TransactionListViewAll = () => {
     };
 
     const handleDelete = async (transactionId) => {
-        console.log('Delete transaction with ID:', transactionId);
-        // Implement delete functionality
-        //setTransactionList(transactionList.filter(transaction => transaction.id !== transactionId));
         try {
-            const response = await deleteTransactionItem(transactionId);
-            if (response.status === 200) {
+            //const response = await deleteTransactionItem(transactionId);
+            const response = await deleteTransaction({ variables: { id: transactionId } });
+            console.log(response);
+            if (response.data.deleteTransaction.success) {
                 setTransactionList(transactionList.filter(transaction => transaction.id !== transactionId));
-                //navigate('/transactions');
+                navigate("/transactions");
                 console.log("Transaction deleted successfully");
             } else {
                 console.error("Transaction failed to delete");
