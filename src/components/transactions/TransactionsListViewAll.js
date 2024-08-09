@@ -1,7 +1,10 @@
 import { useMutation, useQuery } from '@apollo/client';
-import { Delete, Edit, Visibility } from '@mui/icons-material';
-import { FormControl, IconButton, InputLabel, MenuItem, Select, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
+import { Delete, Edit, Print, Visibility } from '@mui/icons-material';
+import { Button, FormControl, IconButton, InputLabel, MenuItem, Select, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
 import { styled as muiStyled } from '@mui/material/styles';
+import { jwtDecode } from 'jwt-decode';
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -10,12 +13,14 @@ import { DELETE_TRANSACTION, GET_ALL_TRANSACTIONS } from '../../apis/graphql/que
 import Card from '../core/card/CardStyle';
 import { deleteTransactionSlice, setLoadingError, setTransactions } from './reducers/transactionSlice';
 
+pdfMake.vfs = pdfFonts.pdfMake.vfs; // Required for pdfmake to work
+
 const Title = styled.h1`
     color: black;
     font-size: 25px;
     padding-left: 0.5rem;
     margin-top: 10px;
-    margin-bottom:0;
+    margin-bottom: 0;
 `;
 
 const Container = styled.div`
@@ -45,6 +50,15 @@ const SearchContainer = muiStyled('div')(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
     margin: '16px',
+}));
+
+const ReportButton = muiStyled(Button)(({ theme }) => ({
+    marginLeft: '16px',
+    backgroundColor: '#4a90e2',
+    color: 'white',
+    '&:hover': {
+        backgroundColor: '#357ABD',
+    },
 }));
 
 const TransactionListViewAll = () => {
@@ -88,20 +102,20 @@ const TransactionListViewAll = () => {
     };
 
     const filteredTransactions = transactions
-    .filter(transaction => {
-        // Ensure description is defined, fallback to empty string if undefined
-        const description = transaction.description ? transaction.description.toLowerCase() : '';
+        .filter(transaction => {
+            // Ensure description is defined, fallback to empty string if undefined
+            const description = transaction.description ? transaction.description.toLowerCase() : '';
 
-        // Check if description includes the search text
-        const matchesSearchText = description.includes(searchText.toLowerCase());
+            // Check if description includes the search text
+            const matchesSearchText = description.includes(searchText.toLowerCase());
 
-        // Check if the selected category matches, or if no category is selected
-        const matchesCategory = selectedCategory === '' || transaction.category === selectedCategory;
+            // Check if the selected category matches, or if no category is selected
+            const matchesCategory = selectedCategory === '' || transaction.category === selectedCategory;
 
-        // Return true if both conditions are met
-        return matchesSearchText && matchesCategory;
-    })
-    .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort transactions by date in descending order
+            // Return true if both conditions are met
+            return matchesSearchText && matchesCategory;
+        })
+        .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort transactions by date in descending order
 
     const handleEdit = (transactionId) => {
         navigate(`/transaction-form/${transactionId}`);
@@ -134,6 +148,59 @@ const TransactionListViewAll = () => {
         setSelectedCategory(e.target.value);
     };
 
+    const getUsernameFromToken = () => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            try {
+                const decodedToken = jwtDecode(token);
+                console.log("Decoded Token:", decodedToken);
+                return decodedToken.email; // Adjust this according to your token's payload structure
+            } catch (error) {
+                console.error("Invalid token or decoding error", error);
+                return null;
+            }
+        }
+        return null;
+    };
+    
+    // Usage
+    const username = getUsernameFromToken();
+
+    const generateReport = () => {
+        // Logic for generating the report
+        console.log("Generating report...");
+        const docDefinition = {
+            content: [
+                { text: 'Transaction Report', style: 'header' },
+                { text: `Email: ${username}`, margin: [0, 0, 0, 15] },
+                {
+                    table: {
+                        headerRows: 1,
+                        widths: [ '*', '*', '*', '*' ],
+                        body: [
+                            [ 'Description', 'Category', 'Amount', 'Date' ],
+                            ...filteredTransactions.map(transaction => [
+                                transaction.description,
+                                transaction.category,
+                                `$${transaction.amount}`,
+                                new Date(transaction.date).toLocaleDateString()
+                            ])
+                        ]
+                    }
+                }
+            ],
+            styles: {
+                header: {
+                    fontSize: 18,
+                    bold: true
+                }
+            }
+        };
+    
+        pdfMake.createPdf(docDefinition).download('TransactionReport.pdf');
+        
+    };
+
     return (
         <Container>
             <Title>Transaction ListView</Title>
@@ -162,6 +229,13 @@ const TransactionListViewAll = () => {
                         ))}
                     </Select>
                 </FormControl>
+                <ReportButton
+                    variant="contained"
+                    startIcon={<Print />}
+                    onClick={generateReport}
+                >
+                    Generate Report
+                </ReportButton>
             </SearchContainer>
             {loadingError ? (
                 <p style={{ color: 'red' }}>{loadingError}</p>
