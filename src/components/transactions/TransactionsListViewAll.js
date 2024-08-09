@@ -3,10 +3,12 @@ import { Delete, Edit, Visibility } from '@mui/icons-material';
 import { FormControl, IconButton, InputLabel, MenuItem, Select, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
 import { styled as muiStyled } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { DELETE_TRANSACTION, GET_ALL_TRANSACTIONS } from '../../apis/graphql/queries';
 import Card from '../core/card/CardStyle';
+import { deleteTransactionSlice, setLoadingError, setTransactions } from './reducers/transactionSlice';
 
 const Title = styled.h1`
     color: black;
@@ -46,21 +48,25 @@ const SearchContainer = muiStyled('div')(({ theme }) => ({
 }));
 
 const TransactionListViewAll = () => {
+    const dispatch = useDispatch();
+    const transactions = useSelector(state => state.transactions.list);
+    const loadingError = useSelector(state => state.transactions.loadingError);
+
     const navigate = useNavigate();
-    const [transactionList, setTransactionList] = useState([]);
-    const [loadingError, setLoadingError] = useState('');
+
     const [searchText, setSearchText] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [categories, setCategories] = useState([]);
+
     const { data, loading, error } = useQuery(GET_ALL_TRANSACTIONS);
 
     const [deleteTransaction] = useMutation(DELETE_TRANSACTION);
 
-      useEffect(() => {
+    useEffect(() => {
         if (data) {
             try {
                 if (data.getAllTransactions) {
-                    setTransactionList(data.getAllTransactions);
+                    dispatch(setTransactions(data.getAllTransactions));
 
                     const uniqueCategories = [...new Set(data.getAllTransactions.map(item => item.category))];
                     setCategories(uniqueCategories);
@@ -68,66 +74,52 @@ const TransactionListViewAll = () => {
                     throw new Error('Fetched data is not an array');
                 }
             } catch (error) {
-                setLoadingError("Error saving data: " + error.message);
+                dispatch(setLoadingError("Error saving data: " + error.message));
             }
         }
-        // async function fetchData() {
-        //     try {
-        //         const response = await getAllTransactions();
-        //         console.log(response);
-        //         if (Array.isArray(response)) {
-        //             setTransactionList(response);
-
-        //             const uniqueCategories = [...new Set(response.map(item => item.category))];
-        //             setCategories(uniqueCategories);
-        //         } else {
-        //             throw new Error('Fetched data is not an array');
-        //         }
-        //     } catch (error) {
-        //         setLoadingError("Error saving data: " + error.message);
-        //     }
-        // }
-        // fetchData();
-    }, [data]);
+    }, [data, dispatch]);
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
-
 
     const formatDateTime = (dateTime) => {
         const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
         return new Date(dateTime).toLocaleDateString(undefined, options);
     };
 
-    const filteredTransactions = transactionList
-        .filter(transaction =>
-            transaction.description.toLowerCase().includes(searchText.toLowerCase()) &&
-            (selectedCategory === '' || transaction.category === selectedCategory)
-        )
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
+    const filteredTransactions = transactions
+    .filter(transaction => {
+        // Ensure description is defined, fallback to empty string if undefined
+        const description = transaction.description ? transaction.description.toLowerCase() : '';
+
+        // Check if description includes the search text
+        const matchesSearchText = description.includes(searchText.toLowerCase());
+
+        // Check if the selected category matches, or if no category is selected
+        const matchesCategory = selectedCategory === '' || transaction.category === selectedCategory;
+
+        // Return true if both conditions are met
+        return matchesSearchText && matchesCategory;
+    })
+    .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort transactions by date in descending order
 
     const handleEdit = (transactionId) => {
-        console.log('Edit transaction with ID:', transactionId);
         navigate(`/transaction-form/${transactionId}`);
     };
 
     const handleDelete = async (transactionId) => {
         try {
-            //const response = await deleteTransactionItem(transactionId);
             const response = await deleteTransaction({ variables: { id: transactionId } });
-            console.log(response);
             if (response.data.deleteTransaction.success) {
-                setTransactionList(transactionList.filter(transaction => transaction.id !== transactionId));
-                navigate("/transactions");
+                dispatch(deleteTransactionSlice(transactionId));
                 console.log("Transaction deleted successfully");
             } else {
                 console.error("Transaction failed to delete");
-                setLoadingError("Transaction not found");
+                dispatch(setLoadingError("Transaction not found"));
             }
         } catch (error) {
-            setLoadingError("Error loading data: " + error.message);
+            dispatch(setLoadingError("Error loading data: " + error.message));
         }
-
     };
 
     const handleViewDetails = (transactionId) => {
@@ -141,7 +133,6 @@ const TransactionListViewAll = () => {
     const handleCategoryChange = (e) => {
         setSelectedCategory(e.target.value);
     };
-
 
     return (
         <Container>

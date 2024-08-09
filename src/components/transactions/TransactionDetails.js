@@ -74,25 +74,6 @@ const TransactionDetails = () => {
         },
     });
 
-    // useEffect(() => {
-    //     const fetchTransaction = async () => {
-    //         try {
-    //             const response = await getTransactionItem(transactionId);
-    //             if (response.status === 200) {
-    //                 const transaction = response.data;
-    //                 setTransaction(transaction);
-    //                 console.log("Transaction fetched successfully");
-    //             } else {
-    //                 console.error("Transaction failed to add");
-    //                 setLoadingError("Transaction not found");
-    //             }
-    //         } catch (error) {
-    //             setLoadingError("Error loading data: " + error.message);
-    //         }
-    //     };
-    //     fetchTransaction();
-    // }, [transactionId]);
-
     const handleEdit = () => {
         console.log('Edit transaction with ID:', transactionId);
         navigate(`/transaction-form/${transactionId}`);
